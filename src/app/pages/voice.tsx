@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
@@ -237,7 +238,7 @@ export default function VoiceRoom() {
       {remoteStreams.map(({ producerId }) => (
         <audio
           key={producerId}
-          ref={el => (audioRefs.current[producerId] = el)}
+          ref={el => { audioRefs.current[producerId] = el; }}
           autoPlay
           muted={mute}
         />
