@@ -1,24 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
-import { useEffect, useRef, useState } from 'react';
-import io from 'socket.io-client';
-import * as mediasoupClient from 'mediasoup-client';
+"use client";
+import { useEffect, useRef, useState } from "react";
+import io from "socket.io-client";
+import * as mediasoupClient from "mediasoup-client";
 
-const socket = io('https://group-chat-production-6656.up.railway.app/');
+const socket = io("https://group-chat-production-6656.up.railway.app/");
 
 export default function VoiceRoom() {
   const [inCall, setInCall] = useState(false);
-  const [userId, setUserId] = useState(''); 
-  const [roomId, setRoomId] = useState(''); 
+  const [userId, setUserId] = useState("");
+  const [roomId, setRoomId] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [mute, setMute] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const [remoteStreams, setRemoteStreams] = useState<{ producerId: string, stream: MediaStream }[]>([]);
+  const [remoteStreams, setRemoteStreams] = useState<
+    { producerId: string; stream: MediaStream }[]
+  >([]);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const sendTransportRef = useRef<any>(null);
   const recvTransportRef = useRef<any>(null);
   const audioTrackRef = useRef<MediaStreamTrack | null>(null);
-  const audioRefs = useRef<{ [producerId: string]: HTMLAudioElement | null }>({});
+  const audioRefs = useRef<{ [producerId: string]: HTMLAudioElement | null }>(
+    {}
+  );
 
   const startCall = async () => {
     setBlocked(false);
@@ -43,11 +47,11 @@ export default function VoiceRoom() {
     detectVoice();
 
     const rtpCapabilities = await new Promise<any>((res) =>
-      socket.emit('joinRoom', { roomId, userId }, res)
+      socket.emit("joinRoom", { roomId, userId }, res)
     );
 
     if (rtpCapabilities?.error) {
-      if (rtpCapabilities.error.includes('not allowed')) {
+      if (rtpCapabilities.error.includes("not allowed")) {
         setBlocked(true);
         return;
       }
@@ -60,13 +64,13 @@ export default function VoiceRoom() {
 
     // Create send transport
     const sendTransportParams = await new Promise<any>((res) =>
-      socket.emit('createTransport', { roomId, direction: 'send' }, res)
+      socket.emit("createTransport", { roomId, direction: "send" }, res)
     );
 
     const sendTransport = device.createSendTransport(sendTransportParams);
     sendTransportRef.current = sendTransport;
-    sendTransport.on('connect', ({ dtlsParameters }, cb) => {
-      socket.emit('connectTransport', {
+    sendTransport.on("connect", ({ dtlsParameters }, cb) => {
+      socket.emit("connectTransport", {
         roomId,
         dtlsParameters,
         transportId: sendTransport.id,
@@ -74,9 +78,9 @@ export default function VoiceRoom() {
       cb();
     });
 
-    sendTransport.on('produce', ({ kind, rtpParameters }, cb) => {
+    sendTransport.on("produce", ({ kind, rtpParameters }, cb) => {
       socket.emit(
-        'produce',
+        "produce",
         {
           transportId: sendTransport.id,
           kind,
@@ -90,18 +94,18 @@ export default function VoiceRoom() {
     await sendTransport.produce({ track: audioTrack });
 
     // Handle remote audio
-    socket.on('newProducer', async ({ producerId }) => {
+    socket.on("newProducer", async ({ producerId }) => {
       // Prevent duplicate consumption
       if (remoteStreams.find((s) => s.producerId === producerId)) return;
 
       const recvTransportParams = await new Promise<any>((res) =>
-        socket.emit('createTransport', { roomId, direction: 'recv' }, res)
+        socket.emit("createTransport", { roomId, direction: "recv" }, res)
       );
 
       const recvTransport = device.createRecvTransport(recvTransportParams);
       recvTransportRef.current = recvTransport;
-      recvTransport.on('connect', ({ dtlsParameters }, cb) => {
-        socket.emit('connectTransport', {
+      recvTransport.on("connect", ({ dtlsParameters }, cb) => {
+        socket.emit("connectTransport", {
           roomId,
           dtlsParameters,
           transportId: recvTransport.id,
@@ -111,7 +115,7 @@ export default function VoiceRoom() {
 
       const consumerParams = await new Promise<any>((res) =>
         socket.emit(
-          'consume',
+          "consume",
           {
             roomId,
             producerId,
@@ -129,8 +133,17 @@ export default function VoiceRoom() {
       });
 
       const remoteStream = new MediaStream([consumer.track]);
+      sendTransport.on("connectionstatechange", (state) => {
+        console.log("Send transport state:", state);
+      });
+      recvTransport.on("connectionstatechange", (state) => {
+        console.log("Recv transport state:", state);
+      });
 
-      setRemoteStreams((prev) => [...prev, { producerId, stream: remoteStream }]);
+      setRemoteStreams((prev) => [
+        ...prev,
+        { producerId, stream: remoteStream },
+      ]);
     });
 
     setInCall(true);
@@ -145,7 +158,7 @@ export default function VoiceRoom() {
     recvTransportRef.current?.close();
 
     // Remove all socket listeners for this component
-    socket.removeAllListeners('newProducer');
+    socket.removeAllListeners("newProducer");
 
     // Reset state
     setInCall(false);
@@ -170,7 +183,7 @@ export default function VoiceRoom() {
     <div style={{ padding: 20 }}>
       <h2>Group Voice Room</h2>
       {blocked && (
-        <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 10 }}>
+        <div style={{ color: "red", fontWeight: "bold", marginBottom: 10 }}>
           🚫 You are blocked from joining this room.
         </div>
       )}
@@ -190,12 +203,12 @@ export default function VoiceRoom() {
         onClick={startCall}
         disabled={!roomId}
         style={{
-          backgroundColor: '#0070f3',
-          color: 'white',
-          padding: '10px 20px',
+          backgroundColor: "#0070f3",
+          color: "white",
+          padding: "10px 20px",
           borderRadius: 6,
           fontSize: 16,
-          cursor: 'pointer',
+          cursor: "pointer",
         }}
       >
         Join Call
@@ -203,27 +216,29 @@ export default function VoiceRoom() {
 
       {inCall && (
         <div style={{ marginTop: 20 }}>
-          <p>You are in room: <strong>{roomId}</strong></p>
           <p>
-            Voice status:{' '}
+            You are in room: <strong>{roomId}</strong>
+          </p>
+          <p>
+            Voice status:{" "}
             <span
               style={{
-                color: speaking ? 'green' : 'gray',
-                fontWeight: 'bold',
+                color: speaking ? "green" : "gray",
+                fontWeight: "bold",
               }}
             >
-              {speaking ? 'Speaking' : 'Silent'}
+              {speaking ? "Speaking" : "Silent"}
             </span>
           </p>
           <button
             onClick={endCall}
             style={{
-              backgroundColor: '#e00',
-              color: 'white',
-              padding: '10px 20px',
+              backgroundColor: "#e00",
+              color: "white",
+              padding: "10px 20px",
               borderRadius: 6,
               fontSize: 16,
-              cursor: 'pointer',
+              cursor: "pointer",
               marginTop: 10,
               marginRight: 10,
             }}
@@ -238,7 +253,9 @@ export default function VoiceRoom() {
       {remoteStreams.map(({ producerId }) => (
         <audio
           key={producerId}
-          ref={el => { audioRefs.current[producerId] = el; }}
+          ref={(el) => {
+            audioRefs.current[producerId] = el;
+          }}
           autoPlay
           muted={mute}
         />
