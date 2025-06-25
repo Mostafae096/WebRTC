@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 
-const socket = io("http://localhost:3000/");
+const socket = io("http://139.162.164.202:3000/");
 
 export default function VoiceRoom() {
   const [inCall, setInCall] = useState(false);
