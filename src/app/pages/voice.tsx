@@ -69,6 +69,11 @@ export default function VoiceRoom() {
 
     const sendTransport = device.createSendTransport(sendTransportParams);
     sendTransportRef.current = sendTransport;
+
+    sendTransport.on("connectionstatechange", (state: any) => {
+      console.log("Send transport state:", state);
+    });
+
     sendTransport.on("connect", ({ dtlsParameters }, cb) => {
       socket.emit("connectTransport", {
         roomId,
@@ -104,6 +109,11 @@ export default function VoiceRoom() {
 
       const recvTransport = device.createRecvTransport(recvTransportParams);
       recvTransportRef.current = recvTransport;
+
+      recvTransport.on("connectionstatechange", (state: any) => {
+        console.log("Recv transport state:", state);
+      });
+
       recvTransport.on("connect", ({ dtlsParameters }, cb) => {
         socket.emit("connectTransport", {
           roomId,
