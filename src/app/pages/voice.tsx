@@ -27,6 +27,11 @@ export default function VoiceRoom() {
   const startCall = async () => {
     setBlocked(false);
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("getUserMedia is not supported in this browser.");
+      return;
+    }
+
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const audioTrack = stream.getAudioTracks()[0];
     audioTrackRef.current = audioTrack;
